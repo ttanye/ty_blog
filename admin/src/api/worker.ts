@@ -17,6 +17,28 @@ function extractJson(text: string): string {
   return text
 }
 
+/** Try to fix common JSON errors from AI responses */
+function tryParseJson(text: string): unknown {
+  // First try direct parse
+  try { return JSON.parse(text) } catch {}
+
+  // Try fixing unescaped newlines in string values
+  try {
+    const fixed = text.replace(/(?<=:\s*")([\s\S]*?)(?=")/g, (match) =>
+      match.replace(/\n/g, '\\n').replace(/\r/g, '\\r')
+    )
+    return JSON.parse(fixed)
+  } catch {}
+
+  // Try fixing unescaped backslashes
+  try {
+    const fixed = text.replace(/\\(?!["\\/bfnrtu])/g, '\\\\')
+    return JSON.parse(fixed)
+  } catch {}
+
+  throw new Error('JSON parse failed after all repair attempts')
+}
+
 const SYSTEM_PROMPT_ORGANIZE = `你是一位资深技术导师兼博客编辑。用户会提供一份学习笔记（从飞书导出），请将这些零散的知识点，扩展成一篇结构完整、内容充实的博客文章。
 
 **要求：**
@@ -112,9 +134,12 @@ export async function organizeArticle(
   const jsonStr = extractJson(aiResponse)
   let result: OrganizeResponse
   try {
-    result = JSON.parse(jsonStr) as OrganizeResponse
-  } catch {
-    throw new Error(`AI 返回格式异常，请重试。原始响应: ${aiResponse.slice(0, 200)}...`)
+    result = tryParseJson(jsonStr) as OrganizeResponse
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : ''
+    throw new Error(
+      `AI 返回格式无法解析（${msg}），请重试。\n\n响应前200字符: ${aiResponse.slice(0, 200)}...\n\n响应最后200字符: ...${aiResponse.slice(-200)}`
+    )
   }
 
   // Validate required fields
