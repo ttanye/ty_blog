@@ -2,31 +2,54 @@ import { defineConfig, type SiteConfig } from 'vitepress'
 import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
+/** Escape special XML characters to prevent XML injection. */
+function escapeXml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;')
+}
+
 function generateRSS(config: SiteConfig) {
   const { pages } = config
+
+  // Resolve GitHub username from CI environment or use a sensible default.
+  // GITHUB_REPOSITORY is set by GitHub Actions as "owner/repo".
+  const githubRepo = process.env.GITHUB_REPOSITORY
+  const githubUsername = githubRepo ? githubRepo.split('/')[0] : 'YOUR_USERNAME'
+  // TODO: Replace 'YOUR_USERNAME' above if not deploying via GitHub Actions.
+  const baseUrl = `https://${escapeXml(githubUsername)}.github.io/ty_blog`
+
+  // Use build time for pubDate since SiteConfig.pages only carries URL strings
+  // and frontmatter data is not accessible from the buildEnd hook.
+  const buildDate = new Date().toUTCString()
+
   const posts = pages
     .filter(p => p.startsWith('/posts/') && p !== '/posts/')
     .map(p => ({
       title: p.replace('/posts/', '').replace('.html', ''),
       url: p,
-      date: '',
     }))
 
   const items = posts.map(p =>
     `<item>
-      <title>${p.title}</title>
-      <link>https://YOUR_USERNAME.github.io/ty_blog${p.url}</link>
-      <guid>https://YOUR_USERNAME.github.io/ty_blog${p.url}</guid>
+      <title>${escapeXml(p.title)}</title>
+      <link>${baseUrl}${escapeXml(p.url)}</link>
+      <guid>${baseUrl}${escapeXml(p.url)}</guid>
+      <pubDate>${buildDate}</pubDate>
     </item>`
   ).join('\n')
 
   const rss = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
 <channel>
-  <title>ty_blog</title>
-  <link>https://YOUR_USERNAME.github.io/ty_blog</link>
-  <description>个人技术博客 - 每日学习总结与分享</description>
+  <title>${escapeXml('ty_blog')}</title>
+  <link>${baseUrl}</link>
+  <description>${escapeXml('个人技术博客 - 每日学习总结与分享')}</description>
   <language>zh-CN</language>
+  <lastBuildDate>${buildDate}</lastBuildDate>
   ${items}
 </channel>
 </rss>`

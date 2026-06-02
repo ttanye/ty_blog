@@ -20,7 +20,7 @@ import { data as posts } from './.vitepress/theme/posts.data.ts'
 
 ## 最新文章
 
-<ul>
+<ul v-if="posts && posts.length > 0">
   <li v-for="post of posts" :key="post.url">
     <a :href="post.url">{{ post.frontmatter.date }} — {{ post.frontmatter.title }}</a>
     <span v-if="post.frontmatter.tags" style="color: #888; font-size: 0.85em;">
@@ -28,3 +28,6 @@ import { data as posts } from './.vitepress/theme/posts.data.ts'
     </span>
   </li>
 </ul>
+<p v-else style="color: #888;">
+  暂无文章，敬请期待。No posts yet — check back soon!
+</p>
