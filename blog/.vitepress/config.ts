@@ -76,9 +76,6 @@ export default defineConfig({
       { text: '标签', link: '/tags' },
       { text: '关于', link: '/about' },
     ],
-    search: {
-      provider: 'local',
-    },
     darkModeSwitchLabel: '深色模式',
     sidebar: false,
     docFooter: {

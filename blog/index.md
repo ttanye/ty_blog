@@ -25,14 +25,14 @@ import { withBase } from 'vitepress'
 ## 最新文章
 
 <div v-if="posts && posts.length > 0" class="post-list">
-  <article v-for="post of posts" :key="post.url" class="post-card">
+  <a v-for="post of posts" :key="post.url" :href="withBase(post.url)" class="post-card">
     <div class="post-card-date">{{ post.frontmatter.date }}</div>
-    <a :href="withBase(post.url)" class="post-card-title">{{ post.frontmatter.title }}</a>
+    <div class="post-card-title">{{ post.frontmatter.title }}</div>
     <p v-if="post.frontmatter.summary" class="post-card-summary">{{ post.frontmatter.summary }}</p>
     <div v-if="post.frontmatter.tags" class="post-card-tags">
       <span v-for="tag in post.frontmatter.tags" :key="tag" class="tag">{{ tag }}</span>
     </div>
-  </article>
+  </a>
 </div>
 <p v-else class="empty-hint">暂无文章，从 Admin 发布第一篇吧 🚀</p>
 
@@ -45,10 +45,13 @@ import { withBase } from 'vitepress'
 }
 
 .post-card {
+  display: block;
   background: var(--vp-c-bg-soft);
   border: 1px solid var(--vp-c-bg-soft);
   border-radius: 12px;
   padding: 24px;
+  text-decoration: none;
+  color: inherit;
   transition: border-color 0.25s, box-shadow 0.25s;
 }
 
@@ -67,11 +70,10 @@ import { withBase } from 'vitepress'
   font-size: 20px;
   font-weight: 600;
   color: var(--vp-c-text-1);
-  text-decoration: none;
   line-height: 1.4;
 }
 
-.post-card-title:hover {
+.post-card:hover .post-card-title {
   color: var(--vp-c-brand);
 }
 
