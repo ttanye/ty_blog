@@ -17,26 +17,47 @@ function extractJson(text: string): string {
   return text
 }
 
-/** Try to fix common JSON errors from AI responses */
+/** Try to fix common JSON errors from AI responses (unescaped chars in strings) */
 function tryParseJson(text: string): unknown {
   // First try direct parse
   try { return JSON.parse(text) } catch {}
 
-  // Try fixing unescaped newlines in string values
-  try {
-    const fixed = text.replace(/(?<=:\s*")([\s\S]*?)(?=")/g, (match) =>
-      match.replace(/\n/g, '\\n').replace(/\r/g, '\\r')
-    )
-    return JSON.parse(fixed)
-  } catch {}
-
-  // Try fixing unescaped backslashes
-  try {
-    const fixed = text.replace(/\\(?!["\\/bfnrtu])/g, '\\\\')
-    return JSON.parse(fixed)
-  } catch {}
-
-  throw new Error('JSON parse failed after all repair attempts')
+  // State machine: escape raw newlines/tabs inside JSON strings only
+  let fixed = ''
+  let inString = false
+  let escaped = false
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i]
+    if (escaped) {
+      fixed += ch
+      escaped = false
+      continue
+    }
+    if (ch === '\\') {
+      fixed += ch
+      escaped = true
+      continue
+    }
+    if (ch === '"') {
+      inString = !inString
+      fixed += ch
+      continue
+    }
+    if (inString && ch === '\n') {
+      fixed += '\\n'
+      continue
+    }
+    if (inString && ch === '\r') {
+      fixed += '\\r'
+      continue
+    }
+    if (inString && ch === '\t') {
+      fixed += '\\t'
+      continue
+    }
+    fixed += ch
+  }
+  return JSON.parse(fixed)
 }
 
 const SYSTEM_PROMPT_ORGANIZE = `你是一位资深技术导师兼博客编辑。用户会提供一份学习笔记（从飞书导出），请将这些零散的知识点，扩展成一篇结构完整、内容充实的博客文章。
