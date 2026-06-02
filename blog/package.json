@@ -1,0 +1,15 @@
+{
+  "name": "ty-blog",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "preview": "vitepress preview"
+  },
+  "devDependencies": {
+    "vitepress": "^1.4.0",
+    "markdown-it-mathjax3": "^4.3.0"
+  }
+}
