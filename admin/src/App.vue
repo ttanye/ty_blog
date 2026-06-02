@@ -6,12 +6,13 @@ import PreviewPanel from './components/PreviewPanel.vue'
 import AiActions from './components/AiActions.vue'
 import ChatPanel from './components/ChatPanel.vue'
 import { organizeArticle } from './api/worker'
-import { publishArticle } from './api/github'
+import { publishArticle, deleteArticle } from './api/github'
 
 const rawContent = ref('')
 const isLoading = ref(false)
 const error = ref('')
 const showChat = ref(false)
+const lastPublishedFile = ref('')
 
 const article = reactive<ArticleMeta>({
   title: '',
@@ -88,9 +89,39 @@ async function handlePublish() {
       article: { ...article },
     })
     error.value = ''
-    alert('发布成功！GitHub Actions 正在自动部署...')
+    const fileName = `${article.date}-${article.slug}.md`
+    lastPublishedFile.value = `blog/posts/${fileName}`
+    alert(`发布成功！文件: ${fileName}\nGitHub Actions 正在自动部署...`)
   } catch (e) {
     error.value = e instanceof Error ? e.message : '发布失败'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+async function handleDelete() {
+  if (!lastPublishedFile.value) {
+    error.value = '没有可删除的文件，请先输入文件路径'
+    return
+  }
+  if (!ghToken.value || !ghRepo.value) {
+    error.value = '请先设置 GitHub Token 和仓库名'
+    return
+  }
+  if (!confirm(`确认删除 ${lastPublishedFile.value}？此操作不可撤销。`)) return
+  isLoading.value = true
+  error.value = ''
+  try {
+    await deleteArticle({
+      token: ghToken.value,
+      repo: ghRepo.value,
+      branch: 'main',
+      filePath: lastPublishedFile.value,
+    })
+    lastPublishedFile.value = ''
+    alert('删除成功！')
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : '删除失败'
   } finally {
     isLoading.value = false
   }
@@ -155,6 +186,18 @@ async function handlePublish() {
         :base-url="aiBaseUrl"
         :model="aiModel"
       />
+      <div class="delete-section">
+        <input
+          v-model="lastPublishedFile"
+          type="text"
+          placeholder="文件路径 (如 blog/posts/2024-01-01-slug.md)"
+        />
+        <button
+          class="delete-btn"
+          :disabled="isLoading || !lastPublishedFile"
+          @click="handleDelete"
+        >删除</button>
+      </div>
     </div>
     <div class="right-panel">
       <PreviewPanel
@@ -213,6 +256,38 @@ async function handlePublish() {
 
 .save-btn:hover {
   opacity: 0.85;
+}
+
+.delete-section {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.delete-section input {
+  flex: 1;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 13px;
+}
+
+.delete-btn {
+  padding: 6px 14px;
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.delete-btn:hover:not(:disabled) {
+  background: #b91c1c;
 }
 
 .error-bar {

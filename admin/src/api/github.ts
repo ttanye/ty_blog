@@ -30,6 +30,42 @@ export interface PublishParams {
   article: ArticleMeta
 }
 
+export interface DeleteParams {
+  token: string
+  repo: string
+  branch: string
+  filePath: string
+}
+
+export async function deleteArticle(params: DeleteParams): Promise<void> {
+  const { token, repo, branch, filePath } = params
+  const url = `https://api.github.com/repos/${repo}/contents/${filePath}`
+
+  const sha = await getFileSha(token, repo, filePath, branch)
+  if (!sha) {
+    throw new Error(`文件不存在: ${filePath}`)
+  }
+
+  const response = await fetch(url, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/vnd.github.v3+json',
+    },
+    body: JSON.stringify({
+      message: `delete: ${filePath}`,
+      sha,
+      branch,
+    }),
+  })
+
+  if (!response.ok) {
+    const err = await response.json() as { message?: string }
+    throw new Error(err.message || `GitHub API error ${response.status}`)
+  }
+}
+
 export async function publishArticle(params: PublishParams): Promise<void> {
   const { token, repo, branch, article } = params
   const fileName = buildFileName(article.slug, article.date)
