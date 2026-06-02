@@ -8,6 +8,61 @@ import ChatPanel from './components/ChatPanel.vue'
 import { organizeArticle } from './api/worker'
 import { publishArticle, deleteArticle } from './api/github'
 
+// --- Auth gate ---
+const authenticated = ref(false)
+const authChecking = ref(true)
+const loginToken = ref('')
+const loginError = ref('')
+
+async function verifyToken(token: string): Promise<boolean> {
+  try {
+    const repo = localStorage.getItem('gh_repo') || loginRepo.value || 'ttanye/ty_blog'
+    const res = await fetch(`https://api.github.com/repos/${repo}`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    })
+    return res.ok
+  } catch {
+    return false
+  }
+}
+
+async function checkAuth() {
+  const savedToken = localStorage.getItem('gh_token')
+  if (savedToken) {
+    const valid = await verifyToken(savedToken)
+    if (valid) {
+      authenticated.value = true
+      ghToken.value = savedToken
+    }
+  }
+  authChecking.value = false
+}
+checkAuth()
+
+const loginRepo = ref('')
+
+async function handleLogin() {
+  loginError.value = ''
+  if (!loginToken.value) {
+    loginError.value = '请输入 GitHub Token'
+    return
+  }
+  const valid = await verifyToken(loginToken.value)
+  if (valid) {
+    authenticated.value = true
+    ghToken.value = loginToken.value
+    localStorage.setItem('gh_token', loginToken.value)
+    if (loginRepo.value) {
+      ghRepo.value = loginRepo.value
+      localStorage.setItem('gh_repo', loginRepo.value)
+    }
+  } else {
+    loginError.value = 'Token 无效，请检查后重试'
+    loginToken.value = ''
+  }
+}
+
+// --- App state ---
 const rawContent = ref('')
 const isLoading = ref(false)
 const error = ref('')
@@ -131,6 +186,32 @@ async function handleDelete() {
 </script>
 
 <template>
+  <!-- Login gate -->
+  <div v-if="!authenticated" class="login-gate">
+    <div class="login-card">
+      <h1>🔐 发布助手</h1>
+      <p class="login-desc">此页面仅限博主使用，请验证 GitHub Token</p>
+      <div v-if="authChecking" class="login-loading">验证中...</div>
+      <template v-else>
+        <input
+          v-model="loginToken"
+          type="password"
+          placeholder="GitHub Personal Access Token"
+          @keyup.enter="handleLogin"
+        />
+        <input
+          v-model="loginRepo"
+          type="text"
+          placeholder="仓库名 (如 ttanye/ty_blog)"
+        />
+        <button @click="handleLogin">验证进入</button>
+      </template>
+      <p v-if="loginError" class="login-error">{{ loginError }}</p>
+    </div>
+  </div>
+
+  <!-- Admin UI -->
+  <template v-else>
   <div class="app-header">
     <h1>🚀 发布助手</h1>
     <div class="gh-settings">
@@ -215,9 +296,83 @@ async function handleDelete() {
       />
     </div>
   </div>
+  </template>
 </template>
 
 <style scoped>
+.login-gate {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.login-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 48px;
+  text-align: center;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+}
+
+.login-card h1 {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.login-desc {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+.login-card input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 16px;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.login-card input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.login-card button {
+  width: 100%;
+  padding: 12px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.login-card button:hover {
+  background: var(--primary-hover);
+}
+
+.login-error {
+  color: #dc2626;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+.login-loading {
+  color: var(--text-secondary);
+  font-size: 14px;
+  padding: 24px 0;
+}
+
+
 .app-header {
   display: flex;
   justify-content: space-between;
