@@ -16,13 +16,14 @@ hero:
 
 <script setup>
 import { data as posts } from './.vitepress/theme/posts.data.ts'
+import { withBase } from 'vitepress'
 </script>
 
 ## 最新文章
 
 <ul v-if="posts && posts.length > 0">
   <li v-for="post of posts" :key="post.url">
-    <a :href="post.url">{{ post.frontmatter.date }} — {{ post.frontmatter.title }}</a>
+    <a :href="withBase(post.url)">{{ post.frontmatter.date }} — {{ post.frontmatter.title }}</a>
     <span v-if="post.frontmatter.tags" style="color: #888; font-size: 0.85em;">
       | {{ post.frontmatter.tags.join(', ') }}
     </span>

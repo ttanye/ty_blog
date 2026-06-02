@@ -4,6 +4,7 @@ layout: page
 
 <script setup>
 import { data as tags } from './.vitepress/theme/tags.data.ts'
+import { withBase } from 'vitepress'
 </script>
 
 # 🏷️ 标签
@@ -17,7 +18,7 @@ import { data as tags } from './.vitepress/theme/tags.data.ts'
     <strong>{{ tag }}</strong> ({{ count }})
     <ul>
       <li v-for="post in posts" :key="post.url">
-        <a :href="post.url">{{ post.date }} — {{ post.title }}</a>
+        <a :href="withBase(post.url)">{{ post.date }} — {{ post.title }}</a>
       </li>
     </ul>
   </div>
