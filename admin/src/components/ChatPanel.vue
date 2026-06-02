@@ -5,6 +5,8 @@ import { chatWithArticle } from '../api/worker'
 const props = defineProps<{
   articleContent: string
   apiKey: string
+  baseUrl: string
+  model: string
 }>()
 
 const question = ref('')
@@ -19,7 +21,7 @@ async function send() {
   isChatting.value = true
 
   try {
-    const result = await chatWithArticle(props.articleContent, q, props.apiKey)
+    const result = await chatWithArticle(props.articleContent, q, props.apiKey, props.baseUrl, props.model)
     messages.value.push({ role: 'assistant', text: result.answer })
   } catch (e) {
     messages.value.push({

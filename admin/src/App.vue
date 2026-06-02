@@ -23,11 +23,15 @@ const article = reactive<ArticleMeta>({
 })
 
 const aiApiKey = ref(localStorage.getItem('ai_api_key') || '')
+const aiBaseUrl = ref(localStorage.getItem('ai_base_url') || 'https://api.deepseek.com')
+const aiModel = ref(localStorage.getItem('ai_model') || 'deepseek-chat')
 const ghToken = ref(localStorage.getItem('gh_token') || '')
 const ghRepo = ref(localStorage.getItem('gh_repo') || '')
 
 function saveSettings() {
   localStorage.setItem('ai_api_key', aiApiKey.value)
+  localStorage.setItem('ai_base_url', aiBaseUrl.value)
+  localStorage.setItem('ai_model', aiModel.value)
   localStorage.setItem('gh_token', ghToken.value)
   localStorage.setItem('gh_repo', ghRepo.value)
 }
@@ -44,7 +48,7 @@ async function handleOrganize() {
   isLoading.value = true
   error.value = ''
   try {
-    const result: OrganizeResponse = await organizeArticle(rawContent.value, aiApiKey.value)
+    const result: OrganizeResponse = await organizeArticle(rawContent.value, aiApiKey.value, aiBaseUrl.value, aiModel.value)
     article.markdown = result.markdown
     article.summary = result.summary
     article.tags = result.tags
@@ -98,6 +102,18 @@ async function handlePublish() {
     <h1>🚀 发布助手</h1>
     <div class="gh-settings">
       <input
+        v-model="aiBaseUrl"
+        type="text"
+        placeholder="API 地址"
+        @change="saveSettings"
+      />
+      <input
+        v-model="aiModel"
+        type="text"
+        placeholder="模型名"
+        @change="saveSettings"
+      />
+      <input
         v-model="aiApiKey"
         type="password"
         placeholder="AI API Key"
@@ -136,6 +152,8 @@ async function handlePublish() {
         v-if="showChat"
         :article-content="article.markdown"
         :api-key="aiApiKey"
+        :base-url="aiBaseUrl"
+        :model="aiModel"
       />
     </div>
     <div class="right-panel">
