@@ -58,7 +58,7 @@
 }`,ec=`你是一个技术学习助手。根据用户提供的文章内容，回答用户的问题。回答应该：
 1. 基于文章内容，不要编造文外信息
 2. 用中文回答，简洁准确
-3. 如果文章没有涉及问题，诚实说明`;async function Xr(e,t,s){const n=await fetch(`${Yl.deepseekBaseUrl}/v1/chat/completions`,{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${e}`},body:JSON.stringify({model:"deepseek-chat",messages:[{role:"system",content:t},{role:"user",content:s}],temperature:.3,max_tokens:8192})});if(!n.ok){const i=await n.text();throw new Error(`DeepSeek API error ${n.status}: ${i}`)}return(await n.json()).choices[0].message.content}async function tc(e,t){if(!e.trim())throw new Error("content is required");const s=await Xr(t,Ql,e),n=Xl(s);let r;try{r=Zl(n)}catch(i){const o=i instanceof Error?i.message:"";throw new Error(`AI 返回格式无法解析（${o}），请重试。
+3. 如果文章没有涉及问题，诚实说明`;async function Xr(e,t,s){const n=await fetch(`${Yl.deepseekBaseUrl}/v1/chat/completions`,{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${e}`},body:JSON.stringify({model:"deepseek-chat",messages:[{role:"system",content:t},{role:"user",content:s}],temperature:.3,max_tokens:8192,response_format:{type:"json_object"}})});if(!n.ok){const i=await n.text();throw new Error(`DeepSeek API error ${n.status}: ${i}`)}return(await n.json()).choices[0].message.content}async function tc(e,t){if(!e.trim())throw new Error("content is required");const s=await Xr(t,Ql,e),n=Xl(s);let r;try{r=Zl(n)}catch(i){const o=i instanceof Error?i.message:"";throw new Error(`AI 返回格式无法解析（${o}），请重试。
 
 响应前200字符: ${s.slice(0,200)}...
 
