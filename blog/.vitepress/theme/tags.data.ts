@@ -27,7 +27,7 @@ export default createContentLoader('posts/*.md', {
       })
     // Sort posts within each tag by date descending
     for (const [, posts] of tagMap) {
-      posts.sort((a, b) => b.date.localeCompare(a.date))
+      posts.sort((a, b) => String(b.date).localeCompare(String(a.date)))
     }
     return Array.from(tagMap.entries())
       .map(([tag, posts]) => ({ tag, count: posts.length, posts }))
