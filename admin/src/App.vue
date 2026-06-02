@@ -22,10 +22,12 @@ const article = reactive<ArticleMeta>({
   date: new Date().toISOString().slice(0, 10),
 })
 
+const deepseekKey = ref(localStorage.getItem('deepseek_key') || '')
 const ghToken = ref(localStorage.getItem('gh_token') || '')
 const ghRepo = ref(localStorage.getItem('gh_repo') || '')
 
-function saveGhSettings() {
+function saveSettings() {
+  localStorage.setItem('deepseek_key', deepseekKey.value)
   localStorage.setItem('gh_token', ghToken.value)
   localStorage.setItem('gh_repo', ghRepo.value)
 }
@@ -35,10 +37,14 @@ async function handleOrganize() {
     error.value = '请先粘贴内容'
     return
   }
+  if (!deepseekKey.value) {
+    error.value = '请先设置 DeepSeek API Key'
+    return
+  }
   isLoading.value = true
   error.value = ''
   try {
-    const result: OrganizeResponse = await organizeArticle(rawContent.value)
+    const result: OrganizeResponse = await organizeArticle(rawContent.value, deepseekKey.value)
     article.markdown = result.markdown
     article.summary = result.summary
     article.tags = result.tags
@@ -92,18 +98,24 @@ async function handlePublish() {
     <h1>🚀 发布助手</h1>
     <div class="gh-settings">
       <input
+        v-model="deepseekKey"
+        type="password"
+        placeholder="DeepSeek API Key"
+        @change="saveSettings"
+      />
+      <input
         v-model="ghRepo"
         type="text"
         placeholder="GitHub 仓库 (user/repo)"
-        @change="saveGhSettings"
+        @change="saveSettings"
       />
       <input
         v-model="ghToken"
         type="password"
         placeholder="GitHub Token"
-        @change="saveGhSettings"
+        @change="saveSettings"
       />
-      <button class="save-btn" @click="saveGhSettings">保存</button>
+      <button class="save-btn" @click="saveSettings">保存</button>
     </div>
   </div>
 
@@ -123,6 +135,7 @@ async function handlePublish() {
       <ChatPanel
         v-if="showChat"
         :article-content="article.markdown"
+        :api-key="deepseekKey"
       />
     </div>
     <div class="right-panel">

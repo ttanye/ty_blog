@@ -1,8 +1,8 @@
 export const config = {
-  // Cloudflare Workers address — replace with actual URL after deployment
-  workerUrl: 'https://ty-blog-worker.ty-blog-worker.workers.dev',
+  // DeepSeek API (direct call from browser)
+  deepseekBaseUrl: 'https://api.deepseek.com',
 
-  // GitHub repo info — replace before use
+  // GitHub repo info
   githubRepo: 'ttanye/ty_blog',
   githubBranch: 'main',
 }
