@@ -8,7 +8,10 @@ hero:
   actions:
     - theme: brand
       text: 浏览文章
-      link: /posts/
+      link: /
+    - theme: alt
+      text: 标签分类
+      link: /tags
     - theme: alt
       text: 关于我
       link: /about
