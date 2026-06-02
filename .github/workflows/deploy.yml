@@ -1,0 +1,52 @@
+name: Deploy Blog
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'blog/**'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install blog dependencies
+        run: |
+          cd blog
+          npm ci
+
+      - name: Build admin SPA
+        run: |
+          cd admin
+          npm ci
+          npm run build
+
+      - name: Build VitePress
+        run: |
+          cd blog
+          npm run build
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: blog/.vitepress/dist
+          publish_branch: gh-pages
