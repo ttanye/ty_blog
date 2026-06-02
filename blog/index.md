@@ -50,14 +50,19 @@ import { withBase } from 'vitepress'
   border: 1px solid var(--vp-c-bg-soft);
   border-radius: 12px;
   padding: 24px;
-  text-decoration: none;
+  text-decoration: none !important;
   color: inherit;
   transition: border-color 0.25s, box-shadow 0.25s;
+}
+
+.post-card * {
+  text-decoration: none !important;
 }
 
 .post-card:hover {
   border-color: var(--vp-c-brand);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  text-decoration: none !important;
 }
 
 .post-card-date {
