@@ -3,6 +3,6 @@ export const config = {
   workerUrl: 'https://ty-blog-worker.YOUR_SUBDOMAIN.workers.dev',
 
   // GitHub repo info — replace before use
-  githubRepo: 'YOUR_USERNAME/ty_blog',
+  githubRepo: 'ttanye/ty_blog',
   githubBranch: 'main',
 }
