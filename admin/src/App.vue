@@ -103,6 +103,7 @@ async function handlePublish() {
         placeholder="GitHub Token"
         @change="saveGhSettings"
       />
+      <button class="save-btn" @click="saveGhSettings">保存</button>
     </div>
   </div>
 
@@ -167,6 +168,20 @@ async function handlePublish() {
 .gh-settings input:focus {
   outline: none;
   border-color: var(--primary);
+}
+
+.save-btn {
+  padding: 6px 16px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.save-btn:hover {
+  opacity: 0.85;
 }
 
 .error-bar {
