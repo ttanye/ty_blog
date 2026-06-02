@@ -1,63 +1,18 @@
 import type { OrganizeResponse, ChatResponse } from '../types'
 import { aiConfig } from '../utils/config'
 
-/** Strip markdown code blocks from AI response before JSON parsing */
-function extractJson(text: string): string {
-  // Remove ```json ... ``` or ``` ... ``` wrappers
-  const codeBlock = text.match(/```(?:json)?\s*([\s\S]*?)```/)
-  if (codeBlock) {
-    return codeBlock[1].trim()
+/** Parse AI response using delimiter markers — avoids all JSON escaping issues */
+function parseDelimited(text: string): OrganizeResponse {
+  const get = (tag: string): string => {
+    const m = text.match(new RegExp(`===${tag}===\\n?([\\s\\S]*?)(?=\\n?===|$)`, 'i'))
+    return m ? m[1].trim() : ''
   }
-  // Try to find the first { and last }
-  const start = text.indexOf('{')
-  const end = text.lastIndexOf('}')
-  if (start !== -1 && end !== -1 && end > start) {
-    return text.slice(start, end + 1)
+  return {
+    markdown: get('MARKDOWN'),
+    summary: get('SUMMARY'),
+    tags: get('TAGS').split(/[\n,]+/).map(s => s.trim()).filter(Boolean),
+    relatedSuggestions: get('RELATED').split('\n').map(s => s.replace(/^[-*]\s*/, '').trim()).filter(Boolean),
   }
-  return text
-}
-
-/** Try to fix common JSON errors from AI responses (unescaped chars in strings) */
-function tryParseJson(text: string): unknown {
-  // First try direct parse
-  try { return JSON.parse(text) } catch {}
-
-  // State machine: escape raw newlines/tabs inside JSON strings only
-  let fixed = ''
-  let inString = false
-  let escaped = false
-  for (let i = 0; i < text.length; i++) {
-    const ch = text[i]
-    if (escaped) {
-      fixed += ch
-      escaped = false
-      continue
-    }
-    if (ch === '\\') {
-      fixed += ch
-      escaped = true
-      continue
-    }
-    if (ch === '"') {
-      inString = !inString
-      fixed += ch
-      continue
-    }
-    if (inString && ch === '\n') {
-      fixed += '\\n'
-      continue
-    }
-    if (inString && ch === '\r') {
-      fixed += '\\r'
-      continue
-    }
-    if (inString && ch === '\t') {
-      fixed += '\\t'
-      continue
-    }
-    fixed += ch
-  }
-  return JSON.parse(fixed)
 }
 
 const SYSTEM_PROMPT_ORGANIZE = `你是一位资深技术导师兼博客编辑。用户会提供一份学习笔记（从飞书导出），请将这些零散的知识点，扩展成一篇结构完整、内容充实的博客文章。
@@ -95,13 +50,20 @@ const SYSTEM_PROMPT_ORGANIZE = `你是一位资深技术导师兼博客编辑。
 
 6. **知识关联**：建议 1-2 个可以对比学习或进阶学习的相关知识点。
 
-**重要**：请你只返回一个合法的 JSON 对象，不要加 markdown 代码块标记：
-{
-  "markdown": "扩展后的完整 Markdown 文章",
-  "summary": "150-200字摘要",
-  "tags": ["tag1", "tag2", "tag3"],
-  "relatedSuggestions": ["关联建议1", "关联建议2"]
-}`
+**重要**：请严格按照以下分隔符格式输出，不要加任何额外的解释或代码块标记：
+
+===MARKDOWN===
+（这里放扩展后的完整 Markdown 文章，可以包含任意代码块和图表，无需转义）
+
+===SUMMARY===
+（150-200字中文摘要，单行纯文本）
+
+===TAGS===
+tag1, tag2, tag3
+
+===RELATED===
+- 关联建议1
+- 关联建议2`
 
 const SYSTEM_PROMPT_CHAT = `你是一个技术学习助手。根据用户提供的文章内容，回答用户的问题。回答应该：
 1. 基于文章内容，不要编造文外信息
@@ -127,7 +89,6 @@ async function callDeepSeek(
       ],
       temperature: 0.3,
       max_tokens: aiConfig.maxTokens,
-      response_format: { type: 'json_object' },
     }),
   })
 
@@ -152,21 +113,14 @@ export async function organizeArticle(
 
   const aiResponse = await callDeepSeek(apiKey, SYSTEM_PROMPT_ORGANIZE, content)
 
-  // Parse the JSON response from AI (handle markdown-wrapped and malformed JSON)
-  const jsonStr = extractJson(aiResponse)
-  let result: OrganizeResponse
-  try {
-    result = tryParseJson(jsonStr) as OrganizeResponse
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : ''
-    throw new Error(
-      `AI 返回格式无法解析（${msg}），请重试。\n\n响应前200字符: ${aiResponse.slice(0, 200)}...\n\n响应最后200字符: ...${aiResponse.slice(-200)}`
-    )
-  }
+  // Parse the AI response using delimiter markers
+  const result = parseDelimited(aiResponse)
 
   // Validate required fields
-  if (!result.markdown || !result.summary || !result.tags) {
-    throw new Error('AI 返回内容不完整，请重试')
+  if (!result.markdown || !result.summary) {
+    throw new Error(
+      `AI 返回内容不完整（markdown或summary缺失），请重试。\n\n响应开头: ${aiResponse.slice(0, 300)}`
+    )
   }
 
   return result
