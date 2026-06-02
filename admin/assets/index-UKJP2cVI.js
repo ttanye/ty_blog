@@ -26,16 +26,28 @@
    - 加入常见误区或注意事项
    - 可以补充代码示例来加深理解
 
-2. **文章结构**：
+2. **可视化图表（Mermaid）**：
+   - 如果知识点适合用图表表达，请生成 1-2 个 Mermaid 图表
+   - 用 markdown 代码块包裹，语言标识为 mermaid（即三个反引号 + mermaid）
+   - 思维导图（mindmap）适合展示知识体系结构，示例语法：
+     mindmap 缩进表示层级，root 为根节点
+   - 流程图（graph TD）适合展示步骤、关系和对比，示例语法：
+     用 A-->B 表示流程，用 {条件} 表示分支判断
+   - 也可用时序图（sequenceDiagram）展示调用顺序
+   - 图表要简洁清晰，不要过于复杂
+   - 注意：Mermaid 代码块内的文字不要使用双引号，改用单引号或不用引号
+
+3. **文章结构**：
    - 使用合适的标题层级（h2/h3/h4），逻辑清晰
    - 开头写一段引言，说明今天学的内容及其重要性
+   - 图表穿插在相关知识点附近，不要堆在一起
    - 结尾写一段总结，提炼核心要点
 
-3. **生成摘要**：写一段 150-200 字的中文摘要，概括文章的精华内容。
+4. **生成摘要**：写一段 150-200 字的中文摘要，概括文章的精华内容。
 
-4. **提取标签**：3-5 个英文技术标签（小写，如 javascript, html-table, css-grid）。
+5. **提取标签**：3-5 个英文技术标签（小写，如 javascript, html-table, css-grid）。
 
-5. **知识关联**：建议 1-2 个可以对比学习或进阶学习的相关知识点。
+6. **知识关联**：建议 1-2 个可以对比学习或进阶学习的相关知识点。
 
 **重要**：请你只返回一个合法的 JSON 对象，不要加 markdown 代码块标记：
 {
@@ -46,7 +58,7 @@
 }`,Ql=`你是一个技术学习助手。根据用户提供的文章内容，回答用户的问题。回答应该：
 1. 基于文章内容，不要编造文外信息
 2. 用中文回答，简洁准确
-3. 如果文章没有涉及问题，诚实说明`;async function Xr(e,t,s){const n=await fetch(`${Yl.deepseekBaseUrl}/v1/chat/completions`,{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${e}`},body:JSON.stringify({model:"deepseek-chat",messages:[{role:"system",content:t},{role:"user",content:s}],temperature:.3,max_tokens:4096})});if(!n.ok){const i=await n.text();throw new Error(`DeepSeek API error ${n.status}: ${i}`)}return(await n.json()).choices[0].message.content}async function ec(e,t){if(!e.trim())throw new Error("content is required");const s=await Xr(t,Zl,e),n=Xl(s);let r;try{r=JSON.parse(n)}catch{throw new Error(`AI 返回格式异常，请重试。原始响应: ${s.slice(0,200)}...`)}if(!r.markdown||!r.summary||!r.tags)throw new Error("AI 返回内容不完整，请重试");return r}async function tc(e,t,s){if(!t.trim())throw new Error("question is required");const n=`文章内容：
+3. 如果文章没有涉及问题，诚实说明`;async function Xr(e,t,s){const n=await fetch(`${Yl.deepseekBaseUrl}/v1/chat/completions`,{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${e}`},body:JSON.stringify({model:"deepseek-chat",messages:[{role:"system",content:t},{role:"user",content:s}],temperature:.3,max_tokens:8192})});if(!n.ok){const i=await n.text();throw new Error(`DeepSeek API error ${n.status}: ${i}`)}return(await n.json()).choices[0].message.content}async function ec(e,t){if(!e.trim())throw new Error("content is required");const s=await Xr(t,Zl,e),n=Xl(s);let r;try{r=JSON.parse(n)}catch{throw new Error(`AI 返回格式异常，请重试。原始响应: ${s.slice(0,200)}...`)}if(!r.markdown||!r.summary||!r.tags)throw new Error("AI 返回内容不完整，请重试");return r}async function tc(e,t,s){if(!t.trim())throw new Error("question is required");const n=`文章内容：
 
 ${e}
 
