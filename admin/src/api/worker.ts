@@ -106,6 +106,7 @@ async function callDeepSeek(
       ],
       temperature: 0.3,
       max_tokens: 8192,
+      response_format: { type: 'json_object' },
     }),
   })
 
