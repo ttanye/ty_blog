@@ -3,6 +3,7 @@ dist/
 .output/
 .vitepress/dist/
 .vitepress/cache/
+blog/.vitepress/cache/
 .env
 .DS_Store
 *.log
