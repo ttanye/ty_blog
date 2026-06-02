@@ -12,8 +12,9 @@ export default createContentLoader('posts/*.md', {
         frontmatter: page.frontmatter,
       }))
       .sort((a, b) => {
-        const dateA = a.frontmatter.date || ''
-        const dateB = b.frontmatter.date || ''
+        // frontmatter date may be a YAML Date or a string
+        const dateA = String(a.frontmatter.date || '')
+        const dateB = String(b.frontmatter.date || '')
         return dateB.localeCompare(dateA)
       })
   },

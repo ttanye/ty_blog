@@ -4,14 +4,21 @@ function buildFileName(slug: string, date: string): string {
   return `${date}-${slug}.md`
 }
 
+function escapeYaml(str: string): string {
+  // If the string contains double quotes or special YAML chars, use a
+  // plain scalar on a single line for summaries; fallback to quoted with
+  // escaped double quotes.
+  return str.replace(/"/g, '\\"')
+}
+
 function buildFrontmatter(meta: ArticleMeta): string {
   const tagsYaml = meta.tags.map(t => `  - ${t}`).join('\n')
   return `---
-title: "${meta.title}"
+title: "${escapeYaml(meta.title)}"
 date: ${meta.date}
 tags:
 ${tagsYaml}
-summary: "${meta.summary}"
+summary: "${escapeYaml(meta.summary)}"
 ---
 `
 }
