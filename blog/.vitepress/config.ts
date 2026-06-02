@@ -75,7 +75,7 @@ export default defineConfig({
       { text: '首页', link: '/' },
       { text: '标签', link: '/tags' },
       { text: '关于', link: '/about' },
-      { text: '发布', link: '/admin/index.html' },
+      { text: '发布', link: 'https://ttanye.github.io/ty_blog/admin/' },
     ],
     darkModeSwitchLabel: '深色模式',
     sidebar: false,
