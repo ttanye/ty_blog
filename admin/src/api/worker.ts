@@ -1,5 +1,5 @@
 import type { OrganizeResponse, ChatResponse } from '../types'
-import { config } from '../utils/config'
+import { aiConfig } from '../utils/config'
 
 /** Strip markdown code blocks from AI response before JSON parsing */
 function extractJson(text: string): string {
@@ -113,20 +113,20 @@ async function callDeepSeek(
   systemPrompt: string,
   userMessage: string
 ): Promise<string> {
-  const response = await fetch(`${config.deepseekBaseUrl}/v1/chat/completions`, {
+  const response = await fetch(`${aiConfig.baseUrl}/v1/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: 'deepseek-chat',
+      model: aiConfig.model,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userMessage },
       ],
       temperature: 0.3,
-      max_tokens: 8192,
+      max_tokens: aiConfig.maxTokens,
       response_format: { type: 'json_object' },
     }),
   })

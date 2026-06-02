@@ -22,12 +22,12 @@ const article = reactive<ArticleMeta>({
   date: new Date().toISOString().slice(0, 10),
 })
 
-const deepseekKey = ref(localStorage.getItem('deepseek_key') || '')
+const aiApiKey = ref(localStorage.getItem('ai_api_key') || '')
 const ghToken = ref(localStorage.getItem('gh_token') || '')
 const ghRepo = ref(localStorage.getItem('gh_repo') || '')
 
 function saveSettings() {
-  localStorage.setItem('deepseek_key', deepseekKey.value)
+  localStorage.setItem('ai_api_key', aiApiKey.value)
   localStorage.setItem('gh_token', ghToken.value)
   localStorage.setItem('gh_repo', ghRepo.value)
 }
@@ -37,14 +37,14 @@ async function handleOrganize() {
     error.value = '请先粘贴内容'
     return
   }
-  if (!deepseekKey.value) {
-    error.value = '请先设置 DeepSeek API Key'
+  if (!aiApiKey.value) {
+    error.value = '请先设置 AI API Key'
     return
   }
   isLoading.value = true
   error.value = ''
   try {
-    const result: OrganizeResponse = await organizeArticle(rawContent.value, deepseekKey.value)
+    const result: OrganizeResponse = await organizeArticle(rawContent.value, aiApiKey.value)
     article.markdown = result.markdown
     article.summary = result.summary
     article.tags = result.tags
@@ -98,9 +98,9 @@ async function handlePublish() {
     <h1>🚀 发布助手</h1>
     <div class="gh-settings">
       <input
-        v-model="deepseekKey"
+        v-model="aiApiKey"
         type="password"
-        placeholder="DeepSeek API Key"
+        placeholder="AI API Key"
         @change="saveSettings"
       />
       <input
@@ -135,7 +135,7 @@ async function handlePublish() {
       <ChatPanel
         v-if="showChat"
         :article-content="article.markdown"
-        :api-key="deepseekKey"
+        :api-key="aiApiKey"
       />
     </div>
     <div class="right-panel">
