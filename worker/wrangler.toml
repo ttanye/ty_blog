@@ -1,0 +1,7 @@
+name = "ty-blog-worker"
+main = "src/index.ts"
+compatibility_date = "2024-06-01"
+
+[vars]
+DEEPSEEK_API_KEY = ""
+DEEPSEEK_BASE_URL = "https://api.deepseek.com"
