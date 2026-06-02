@@ -9,56 +9,19 @@ import { organizeArticle } from './api/worker'
 import { publishArticle, deleteArticle } from './api/github'
 
 // --- Auth gate ---
-const authenticated = ref(false)
-const authChecking = ref(true)
-const loginToken = ref('')
+const ADMIN_PASSWORD = '050625'
+const authenticated = ref(sessionStorage.getItem('admin_auth') === '1')
+const loginPassword = ref('')
 const loginError = ref('')
 
-async function verifyToken(token: string): Promise<boolean> {
-  try {
-    const repo = localStorage.getItem('gh_repo') || loginRepo.value || 'ttanye/ty_blog'
-    const res = await fetch(`https://api.github.com/repos/${repo}`, {
-      headers: { 'Authorization': `Bearer ${token}` },
-    })
-    return res.ok
-  } catch {
-    return false
-  }
-}
-
-async function checkAuth() {
-  const savedToken = localStorage.getItem('gh_token')
-  if (savedToken) {
-    const valid = await verifyToken(savedToken)
-    if (valid) {
-      authenticated.value = true
-      ghToken.value = savedToken
-    }
-  }
-  authChecking.value = false
-}
-checkAuth()
-
-const loginRepo = ref('')
-
-async function handleLogin() {
-  loginError.value = ''
-  if (!loginToken.value) {
-    loginError.value = '请输入 GitHub Token'
-    return
-  }
-  const valid = await verifyToken(loginToken.value)
-  if (valid) {
+function handleLogin() {
+  if (loginPassword.value === ADMIN_PASSWORD) {
     authenticated.value = true
-    ghToken.value = loginToken.value
-    localStorage.setItem('gh_token', loginToken.value)
-    if (loginRepo.value) {
-      ghRepo.value = loginRepo.value
-      localStorage.setItem('gh_repo', loginRepo.value)
-    }
+    sessionStorage.setItem('admin_auth', '1')
+    loginError.value = ''
   } else {
-    loginError.value = 'Token 无效，请检查后重试'
-    loginToken.value = ''
+    loginError.value = '密码错误，请重试'
+    loginPassword.value = ''
   }
 }
 
@@ -190,22 +153,14 @@ async function handleDelete() {
   <div v-if="!authenticated" class="login-gate">
     <div class="login-card">
       <h1>🔐 发布助手</h1>
-      <p class="login-desc">此页面仅限博主使用，请验证 GitHub Token</p>
-      <div v-if="authChecking" class="login-loading">验证中...</div>
-      <template v-else>
-        <input
-          v-model="loginToken"
-          type="password"
-          placeholder="GitHub Personal Access Token"
-          @keyup.enter="handleLogin"
-        />
-        <input
-          v-model="loginRepo"
-          type="text"
-          placeholder="仓库名 (如 ttanye/ty_blog)"
-        />
-        <button @click="handleLogin">验证进入</button>
-      </template>
+      <p class="login-desc">此页面仅限博主使用，请输入密码</p>
+      <input
+        v-model="loginPassword"
+        type="password"
+        placeholder="请输入访问密码"
+        @keyup.enter="handleLogin"
+      />
+      <button @click="handleLogin">验证进入</button>
       <p v-if="loginError" class="login-error">{{ loginError }}</p>
     </div>
   </div>
@@ -366,11 +321,6 @@ async function handleDelete() {
   margin-top: 8px;
 }
 
-.login-loading {
-  color: var(--text-secondary);
-  font-size: 14px;
-  padding: 24px 0;
-}
 
 
 .app-header {
