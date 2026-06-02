@@ -1,7 +1,9 @@
 import type { ArticleMeta } from '../types'
 
 function buildFileName(slug: string, date: string): string {
-  return `${date}-${slug}.md`
+  // Use only the date part (YYYY-MM-DD) for the filename, ignore time
+  const datePart = date.slice(0, 10)
+  return `${datePart}-${slug}.md`
 }
 
 function escapeYaml(str: string): string {
@@ -15,7 +17,7 @@ function buildFrontmatter(meta: ArticleMeta): string {
   const tagsYaml = meta.tags.map(t => `  - ${t}`).join('\n')
   return `---
 title: "${escapeYaml(meta.title)}"
-date: ${meta.date}
+date: "${escapeYaml(meta.date)}"
 tags:
 ${tagsYaml}
 summary: "${escapeYaml(meta.summary)}"

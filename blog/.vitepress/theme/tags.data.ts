@@ -3,7 +3,7 @@ import { createContentLoader } from 'vitepress'
 function formatDate(d: unknown): string {
   if (!d) return ''
   if (d instanceof Date) return d.toISOString().slice(0, 10)
-  return String(d).slice(0, 10)
+  return String(d)
 }
 
 interface TaggedPost {

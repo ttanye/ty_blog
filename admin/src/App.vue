@@ -20,7 +20,7 @@ const article = reactive<ArticleMeta>({
   markdown: '',
   summary: '',
   tags: [],
-  date: new Date().toISOString().slice(0, 10),
+  date: new Date().toISOString().slice(0, 16).replace('T', ' '),
 })
 
 const aiApiKey = ref(localStorage.getItem('ai_api_key') || '')
