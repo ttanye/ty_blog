@@ -1,5 +1,21 @@
-import type { OrganizeResponse, ChatResponse, ApiError } from '../types'
+import type { OrganizeResponse, ChatResponse } from '../types'
 import { config } from '../utils/config'
+
+/** Strip markdown code blocks from AI response before JSON parsing */
+function extractJson(text: string): string {
+  // Remove ```json ... ``` or ``` ... ``` wrappers
+  const codeBlock = text.match(/```(?:json)?\s*([\s\S]*?)```/)
+  if (codeBlock) {
+    return codeBlock[1].trim()
+  }
+  // Try to find the first { and last }
+  const start = text.indexOf('{')
+  const end = text.lastIndexOf('}')
+  if (start !== -1 && end !== -1 && end > start) {
+    return text.slice(start, end + 1)
+  }
+  return text
+}
 
 const SYSTEM_PROMPT_ORGANIZE = `你是一个技术博客编辑助手。用户会提供一篇从飞书导出的 Markdown 文章，请做以下处理：
 
@@ -64,9 +80,21 @@ export async function organizeArticle(
 
   const aiResponse = await callDeepSeek(apiKey, SYSTEM_PROMPT_ORGANIZE, content)
 
-  // Parse the JSON response from AI
-  const result = JSON.parse(aiResponse)
-  return result as OrganizeResponse
+  // Parse the JSON response from AI (handle markdown-wrapped and malformed JSON)
+  const jsonStr = extractJson(aiResponse)
+  let result: OrganizeResponse
+  try {
+    result = JSON.parse(jsonStr) as OrganizeResponse
+  } catch {
+    throw new Error(`AI 返回格式异常，请重试。原始响应: ${aiResponse.slice(0, 200)}...`)
+  }
+
+  // Validate required fields
+  if (!result.markdown || !result.summary || !result.tags) {
+    throw new Error('AI 返回内容不完整，请重试')
+  }
+
+  return result
 }
 
 export async function chatWithArticle(
