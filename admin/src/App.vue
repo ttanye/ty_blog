@@ -12,7 +12,7 @@ const rawContent = ref('')
 const isLoading = ref(false)
 const error = ref('')
 const showChat = ref(false)
-const lastPublishedFile = ref('')
+const lastPublishedFile = ref(localStorage.getItem('last_published_file') || '')
 
 const article = reactive<ArticleMeta>({
   title: '',
@@ -89,8 +89,9 @@ async function handlePublish() {
       article: { ...article },
     })
     error.value = ''
-    const fileName = `${article.date}-${article.slug}.md`
+    const fileName = `${article.date.slice(0, 10)}-${article.slug}.md`
     lastPublishedFile.value = `blog/posts/${fileName}`
+    localStorage.setItem('last_published_file', lastPublishedFile.value)
     alert(`发布成功！文件: ${fileName}\nGitHub Actions 正在自动部署...`)
   } catch (e) {
     error.value = e instanceof Error ? e.message : '发布失败'
@@ -119,6 +120,7 @@ async function handleDelete() {
       filePath: lastPublishedFile.value,
     })
     lastPublishedFile.value = ''
+    localStorage.removeItem('last_published_file')
     alert('删除成功！')
   } catch (e) {
     error.value = e instanceof Error ? e.message : '删除失败'
@@ -187,16 +189,19 @@ async function handleDelete() {
         :model="aiModel"
       />
       <div class="delete-section">
-        <input
-          v-model="lastPublishedFile"
-          type="text"
-          placeholder="文件路径 (如 blog/posts/2024-01-01-slug.md)"
-        />
-        <button
-          class="delete-btn"
-          :disabled="isLoading || !lastPublishedFile"
-          @click="handleDelete"
-        >删除</button>
+        <div class="delete-header">🗑️ 删除文章</div>
+        <div class="delete-row">
+          <input
+            v-model="lastPublishedFile"
+            type="text"
+            placeholder="文件路径 (如 blog/posts/2024-01-01-slug.md)"
+          />
+          <button
+            class="delete-btn"
+            :disabled="isLoading || !lastPublishedFile"
+            @click="handleDelete"
+          >确认删除</button>
+        </div>
       </div>
     </div>
     <div class="right-panel">
@@ -259,35 +264,58 @@ async function handleDelete() {
 }
 
 .delete-section {
+  padding: 16px;
+  background: #fef2f2;
+  border-radius: var(--radius);
+  border: 2px solid #fecaca;
+}
+
+.delete-header {
+  font-size: 15px;
+  font-weight: 600;
+  color: #dc2626;
+  margin-bottom: 10px;
+}
+
+.delete-row {
   display: flex;
   gap: 8px;
-  padding: 12px;
-  background: var(--card-bg);
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
 }
 
 .delete-section input {
   flex: 1;
-  padding: 6px 12px;
-  border: 1px solid var(--border);
+  padding: 8px 12px;
+  border: 1px solid #fecaca;
   border-radius: var(--radius);
   font-size: 13px;
+  background: #fff;
+}
+
+.delete-section input:focus {
+  outline: none;
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
 }
 
 .delete-btn {
-  padding: 6px 14px;
+  padding: 8px 18px;
   background: #dc2626;
   color: #fff;
   border: none;
   border-radius: var(--radius);
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
 }
 
 .delete-btn:hover:not(:disabled) {
   background: #b91c1c;
+}
+
+.delete-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .error-bar {
